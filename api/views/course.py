@@ -3,27 +3,21 @@ from django.shortcuts import HttpResponse
 from django.http import JsonResponse
 
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.viewsets import ViewSetMixin
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.versioning import URLPathVersioning
 from rest_framework.pagination import PageNumberPagination
 
-from api.serializers.course import CourseSerializer, CourseModelSerializer, DegreeCourseSerializer
+from api.serializers import course
 from api import serializers as app01_serializers
 from api.utils.response import BaseResponse
 from api import models
 import json
 
+class CoursesView(ViewSetMixin, APIView):
 
-# class CoursesView(ModelViewSet):
-#     queryset=Course.objects.all()
-#     serializer_class =app01_serializers.Course_serializers
-
-
-class CoursesView(APIView):
-
-    def get(self, request, *args, **kwargs):
+    def list(self,request,*args,**kwargs):
         ret = BaseResponse()
 
         try:
@@ -35,7 +29,7 @@ class CoursesView(APIView):
             course_list = page.paginate_queryset(queryset, request, self)
 
             # 分页之后的结果执行序列化
-            ser = CourseModelSerializer(instance=course_list, many=True)
+            ser = course.CourseModelSerializer(instance=course_list, many=True)
 
             ret.data = ser.data
         except Exception as e:
@@ -44,19 +38,25 @@ class CoursesView(APIView):
 
         return Response(ret.dict)
 
+    def create(self,request,*args,**kwargs):
+        pass
 
-class CourseDetailView(APIView):
-    def get(self, request, pk, *args, **kwargs):
-        response = {'code': 1000, 'data': None, 'error': None}
+    def retrieve(self,request,pk,*args,**kwargs):
+        response = {'code':1000, 'data':None,'error':None}
         try:
             course = models.Course.objects.get(id=pk)
-            ser = CourseModelSerializer(instance=course)
+            ser = course.CourseModelSerializer(instance=course)
             response['data'] = ser.data
         except Exception as e:
             response['code'] = 500
             response['error'] = '获取数据失败'
         return Response(response)
 
+    def update(self,request,pk,*args,**kwargs):
+        pass
+
+    def destroy(self,request,pk,*args,**kwargs):
+        pass
 
 # a.查看所有学位课并打印学位课名称以及授课老师
 class DegreeCourseView(APIView):
@@ -76,7 +76,7 @@ class DegreeCourseView(APIView):
         degree_list = page.paginate_queryset(queryset, request, self)
 
         # 分页之后的结果执行序列化
-        ser = DegreeCourseSerializer(instance=degree_list, many=True)
+        ser = course.DegreeCourseSerializer(instance=degree_list, many=True)
         ret.data = ser.data
 
     except Exception as e:
